@@ -1,0 +1,2957 @@
+openapi: 3.0.1
+info:
+  title: Equifax Commercial API - Reports
+  description: Request and retrieve Equifax Reports
+  version: 1.1.0
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    name: Equifax NZ
+    email: assistonline.nz@equifax.com
+    url: https://www.equifax.co.nz/contact
+servers:
+  # CTA/Testing enviroment
+- url: https://apiconnect.test.equifax.co.nz/reporting
+  # Production enviroment
+- url: https://apiconnect.equifax.co.nz/reporting
+paths:
+  /types/v1/organisation/{nzbn}:
+    get:
+      tags:
+        - Types
+      summary: Get report types
+      description: |
+        ## Description
+          * Get applicable report types for a searched organisation
+          * Use the path parameter 'nzbn' (mandatory)
+      operationId: Get_ReportType
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/Accept'
+        - $ref: '#/components/parameters/Content-Type'
+        - $ref: '#/components/parameters/NZBN'
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportTypes'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        408:
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+  /requests/v1:
+    post:
+      tags:
+        - Requests
+      summary: Submit a report request
+      description: |
+        ## Description
+        * Submit report request to get id, status, reportType for a particular report.
+        * The id can be used to get the actual report data using the GET Business Report APIs.
+        ## Organisation Validation
+        *
+      operationId: Submit_Report_Request
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/Accept'
+        - $ref: '#/components/parameters/Content-Type'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+        required: true
+      responses:
+        201:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResponse'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        422:
+          description:  Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        408:
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+  /reports/v1/standard:
+    post:
+      tags:
+        - Reports
+      summary: Submit Synchronous/Asynchronous Standard Business Report Request
+      description: Submit synchronous/asynchronous report request. Compiled report returns sub report
+        content in place of related links.
+      parameters:
+        - name: compile
+          in: query
+          schema:
+            type: boolean
+            default: true # true = synchronous, false = asynchronous
+      requestBody:
+        description: Search term; name, NZBN or company number; minimum 3 characters
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/StandardBusiness'
+        required: true
+      responses:
+        201:
+          description: Successful Response Compile
+          content:
+            application/json(i.e compile=true): # use application/json
+              schema:
+                $ref: '#/components/schemas/StandardBusinessReportCompileTrue'
+            application/json(i.e compile=false): # use application/json
+              schema:
+                $ref: '#/components/schemas/StandardBusinessReportCompileFalse'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        422:
+          description:  Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        408:
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+  /reports/v1/standard/{id}:
+    get:
+      tags:
+        - Reports
+      summary: Retrieve Standard Business Report
+      description: Retrieve Report. Compiled report returns applicable sub report content in place of related links.
+      parameters:
+        - $ref: '#/components/parameters/ID'
+        - name: compile
+          in: query
+          schema:
+            type: boolean
+            default: false # true = synchronous, false = asynchronous
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json(ie. Compile=False): # use application/json
+              schema:
+                $ref: '#/components/schemas/StandardBusinessReportCompileFalse'
+            application/json(ie. Compile=True): # use application/json
+              schema:
+                $ref: '#/components/schemas/StandardBusinessReportCompileTrue'
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        406:
+          description:  Not Acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        408:
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+  /reports/v1/advanced:
+    post:
+      tags:
+        - Reports
+      summary: Submit Synchronous/Synchronous Advanced Business Report Request
+      description: Submit synchronous/asynchronous report request. Compiled report returns sub report content in place of related links.
+      parameters:
+        - name: compile
+          in: query
+          schema:
+            type: boolean
+            default: true # true = synchronous, false = asynchronous
+      requestBody:
+        description: Search term; name, NZBN or company number; minimum 3 characters
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/AdvancedBusiness'
+        required: true
+      responses:
+        201:
+          description: Successful Response
+          content:
+            application/json (ie. Compile=True): # use application/json
+              schema:
+                $ref: '#/components/schemas/AdvancedBusinessReportCompileTrue'
+            application/json (ie. Compile=False): # use application/json
+              schema:
+                $ref: '#/components/schemas/AdvancedBusinessReportCompileFalse'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        422:
+          description:  Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        408:
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+  /reports/v1/advanced/{id}:
+    get:
+      tags:
+        - Reports
+      summary: Retrieve Advanced Business Report
+      description: Retrieve Report. Compiled report returns applicable sub report content in place of related links.
+      parameters:
+        - $ref: '#/components/parameters/ID'
+        - name: compile
+          in: query
+          schema:
+            type: boolean
+            default: false # true = synchronous, false = asynchronous
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json(ie. Compile=False): # use application/json
+              schema:
+                $ref: '#/components/schemas/AdvancedBusinessReportCompileFalse'
+            application/json(ie. Compile=True): # use application/json
+              schema:
+                $ref: '#/components/schemas/AdvancedBusinessReportCompileTrue'
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        406:
+          description:  Not Acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        408:
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+  /reports/v1/organisationDetails/{id}:
+    get:
+      tags:
+        - Reports
+      summary: Retrieve Organisation Details Report
+      description: Retrieve Report
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrgDetailsReport'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        410:
+          description:  Gone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        403:
+          description:  Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        408:
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+  /reports/v1/score/{id}:
+    get:
+      tags:
+        - Reports
+      summary: Retrieve Commercial Score Report
+      description: Retrieve Report
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommScoreReport'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        410:
+          description:  Gone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        403:
+          description:  Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        408:
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+  /reports/v1/securityInterests/{id}:
+    get:
+      tags:
+        - Reports
+      summary: Retrieve Security Interests Report
+      description: Retrieve Report
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecInterestsReport'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        410:
+          description:  Gone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        403:
+          description:  Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        408:
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+  /reports/v1/management/{id}:
+    get:
+      tags:
+        - Reports
+      summary: Retrieve Management Report
+      description: Retrieve Report
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommMgmtReport'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        410:
+          description:  Gone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        403:
+          description:  Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        408:
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+  /reports/v1/adverseHistory/{id}:
+    get:
+      tags:
+        - Reports
+      summary: Retrieve Adverse History Report
+      description: Retrieve Report
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdverseHistoryReport'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        410:
+          description:  Gone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        403:
+          description:  Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        408:
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+  /reports/v1/enquiryHistory/{id}:
+    get:
+      tags:
+        - Reports
+      summary: Retrieve Enquiry History Report
+      description: Retrieve Report
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnquiryHistoryReport'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        410:
+          description:  Gone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        403:
+          description:  Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        408:
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+  /reports/v1/creditActivitySummary/{id}:
+    get:
+      tags:
+        - Reports
+      summary: Retrieve Credit Activity Summary Report
+      description: Retrieve Report
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditActivityReport'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        410:
+          description:  Gone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        403:
+          description:  Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        408:
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+  /reports/v1/payments/{id}:
+    get:
+      tags:
+        - Reports
+      summary: Retrieve Commercial Payments Report
+      description: Retrieve Report
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommPaymentsReport'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        410:
+          description:  Gone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        403:
+          description:  Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        408:
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+  /reports/v1/eventsDocumentsNotices/{id}:
+    get:
+      tags:
+        - Reports
+      summary: Retrieve Events Documents Notices Report
+      description: Retrieve Report
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventsDocumentsNoticesReport'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        410:
+          description:  Gone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        403:
+          description:  Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        408:
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+  /reports/v1/ownership/{id}:
+    get:
+      tags:
+        - Reports
+      summary: Retrieve Organisation Ownership Report
+      description: Retrieve Report
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganisationOwnershipReport'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        410:
+          description:  Gone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        403:
+          description:  Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        408:
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+  /reports/v1/shareholders/{id}:
+    get:
+      tags:
+        - Reports
+      summary: Retrieve Organisation Shareholders Report
+      description: Retrieve Report
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganisationShareholdersReport'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        410:
+          description:  Gone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        403:
+          description:  Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        408:
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+  /reports/v1/directorScore/{id}:
+    get:
+      tags:
+        - Reports
+      summary: Retrieve Director Score Report
+      description: Retrieve Report
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      responses:
+        200:
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DirectorScoreReport'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        410:
+          description:  Gone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        403:
+          description:  Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        408:
+          description: Request Timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponses'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Authorization:
+      name: Authorization
+      in: header
+      description: Bear token must be provided in the request header.
+      required: true
+      schema:
+        type: string
+        example: Bearer AbCdEf123456
+    NZBN:
+      name: nzbn
+      in: path
+      description: NZBN number
+      required: true
+      schema:
+        type: string
+    ID:
+      name: id
+      in: path
+      description: Unique identifier of report to retrieve
+      required: true
+      schema:
+        type: string
+    Accept:
+      name: Accept
+      in: header
+      description: The Accept request HTTP header advertises which content types, expressed as MIME types, the client is able to understand.
+      required: true
+      schema:
+        type: string
+        example: application/json
+    Content-Type:
+      name: Content-Type
+      in: header
+      description: The Content-Type entity header is used to indicate the media type of the resource.
+      required: true
+      schema:
+        type: string
+        example: application/json
+  schemas:
+    MetadataStatus:
+      type: string
+      enum: # http status info
+       - success
+       - created
+       - accepted
+       - not acceptable
+       - processing
+       - error
+       - not found
+       - not modified
+       - no content
+       - forbidden
+       - service unavailable
+       - internal server error
+       - not implemented
+       - request timeout
+       - gone
+       - unprocessable entity
+    ReportStatus:
+      type: string
+      enum:
+      - Pending
+      - InProgress
+      - Complete
+      - Failed
+      - PartiallyComplete
+    ReportDataType:
+      type: string
+      enum:
+       - score
+       - adverseHistory
+       - management
+       - payments
+       - organisationDetails
+       - securityInterests
+       - enquiryHistory
+       - eventsDocumentsNotices
+       - creditActivitySummary
+       - shareholders
+       - ownership
+       - directorScore
+    EnquiryType:
+      type: string
+      enum:
+        - CA  # New Credit Application
+        - EC  # Review Existing Credit
+        - NC  # Non Credit Enquiry
+    AccountType:
+      type: string
+      enum:
+        - CD  # Cash
+        - W   # 7 Day Account
+        - 1M  # 8 - 29 Days Account
+        - 2M  # 30 - 59 Days Account
+        - 3M  # 60+ Days Account
+        - AF  # Asset Finance
+        - CR  # Leasing/Rental
+        - OD  # Bank Overdraft
+        - CP  # Credit Card
+        - RM  # Term Loan/Mortgage
+        - OC  # Other Credit
+        - RC  # Overdraft/Revolving Credit
+        - F   # Debt Collection
+        - BV  # Business Verification
+        - SD  # Supplier Due Diligence
+        - CA  # Competitor Assessment
+        - ON  # Other Non-Credit
+
+        ## Combinations
+        # Enquiry Type  Account Type  Description
+        #------------------------------------------------
+        # CA  CD  Cash
+        # CA  W  7 Day Account
+        # CA  1M  8 - 29 Days Account
+        # CA  2M  30 - 59 Days Account
+        # CA  3M  60+ Days Account
+        # CA  AF  Asset Finance
+        # CA  CR  Leasing/Rental
+        # CA  OD  Bank Overdraft
+        # CA  CP  Credit Card
+        # CA  RM  Term Loan/Mortgage
+        # CA  OC  Other Credit
+        # CA  RC  Overdraft/Revolving Credit
+        #------------------------------------------------
+        # EC  CD  Cash
+        # EC  W  7 Day Account
+        # EC  1M  8 - 29 Days Account
+        # EC  2M  30 - 59 Days Account
+        # EC  3M  60+ Days Account
+        # EC  AF  Asset Finance
+        # EC  CR  Leasing/Rental
+        # EC  OD  Bank Overdraft
+        # EC  CP  Credit Card
+        # EC  RM  Term Loan/Mortgage
+        # EC  OC  Other Credit
+        # EC  RC  Overdraft/Revolving Credit
+        # EC  F  Debt Collection
+        # NC  BV  Business Verification
+        # NC  SD  Supplier Due Diligence
+        # NC  CA  Competitor Assessment
+        # NC  ON  Other Non-Credit
+        #------------------------------------------------
+    ReportTypes:
+      type: object
+      properties:
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        data:
+          type: object
+          properties:
+            reportTypes:
+              type: array
+              description: applicable reports and services available for subject entity
+              items:
+                $ref: '#/components/schemas/ReportType'
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+          description: hyperlinks to additional, related services
+    ReportType:
+      type: object
+      properties:
+        name:
+          type: string
+          description: name of report
+        description:
+          type: string
+          description: description of the report
+        category:
+          type: string
+          description: product category
+        reportType:
+          type: string
+          description: reportType value used for requesting the correct report
+        _links:
+          type: object
+          properties:
+            reportRequest:
+              $ref: '#/components/schemas/Link'
+    ReportRequest:
+      oneOf:
+        - $ref: '#/components/schemas/StandardBusiness'
+        - $ref: '#/components/schemas/AdvancedBusiness'
+      discriminator:
+        propertyName: reportType
+        mapping:
+          standard: '#/components/schemas/StandardBusiness'
+          advanced: '#/components/schemas/AdvancedBusiness'
+    Metadata:
+      required:
+      - status
+      - timestamp
+      - version
+      type: object
+      properties:
+        version:
+          type: string
+          description: API version
+        status:
+          $ref: '#/components/schemas/MetadataStatus'
+        timestamp:
+          type: string
+          description: date and time value for when transaction processed
+    IQCMessages:
+      type: object
+      properties:
+        code:
+          type: string
+        text:
+          type: string
+    ReportResponse:
+      type: object
+      properties:
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              description: unique identifier of report
+            status:
+              $ref: '#/components/schemas/ReportStatus'
+            reporType:
+              type: string
+              description: report type
+            _links:
+              type: object
+              properties:
+                reports:
+                  $ref: '#/components/schemas/Link'
+              description: hyperlinks to additional, related services
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+          description: hyperlinks to additional, related services
+        #errors:
+          #type: array
+          #items:
+            #$ref: '#/components/schemas/Error'
+    Link:
+      required:
+      - href
+      - title
+      - type
+      type: object
+      properties:
+        href:
+          type: string
+          description: target resource URI
+        title:
+          type: string
+          description: description of link
+        type:
+          type: string
+          description: method/use of link
+
+    nameWithCount:
+      type: object
+      properties:
+        name:
+          type: string
+        count:
+          type: number
+
+    Error:
+      required:
+      - id
+      - message
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+          description: internal error code
+        type:
+          type: string
+          description: message type
+        message:
+          type: string
+          description: user message describing error
+    StandardBusinessRequest:
+      type: object
+      properties:
+        customerReference:
+          description: identifying reference as provided by client, max 16 characters
+          type: string
+        organisationNumber:
+          description: unique registered company number (incorporation number) for applicable entity types, up to 7 characters
+          type: string
+        nzbn:
+          description: unique NZBN number for the organisation, 13 characters
+          type: string
+        organisationName:
+          description: legal business name
+          type: string
+        enquiryType:
+          $ref: '#/components/schemas/EnquiryType'
+        accountType:
+          $ref: '#/components/schemas/AccountType'
+        amount:
+          description: total value of actual or potential credit agreement, in whole NZD
+          type: number
+    AdvancedBusinessRequest:
+      type: object
+      properties:
+        customerReference:
+          description: identifying reference as provided by client, max 16 characters
+          type: string
+        organisationNumber:
+          description: unique registered company number (incorporation number) for applicable entity types, up to 7 characters
+          type: string
+        nzbn:
+          description: unique NZBN number for the organisation, 13 characters
+          type: string
+        organisationName:
+          description: legal business name
+          type: string
+        enquiryType:
+          $ref: '#/components/schemas/EnquiryType'
+        accountType:
+          $ref: '#/components/schemas/AccountType'
+    StandardBusiness:
+      required:
+        - reportType
+        - reportParameters
+      properties:
+        reportType:
+          type: string
+          enum:
+            - standard
+          description: Define the type of the report "standard" or "advanced
+        reportParameters:
+          allOf:
+            - $ref: '#/components/schemas/StandardBusinessRequest'
+          required:
+            - organisationNumber
+            - enquiryType
+            - accountType
+            - nzbn
+            - organisationName
+    AdvancedBusiness:
+      required:
+        - reportType
+        - reportParameters
+      type: object
+      allOf:
+        - properties:
+            reportType:
+              type: string
+              enum:
+                - advanced
+              description: Define the type of the report "standard" or "advanced
+            reportParameters:
+              allOf:
+                - $ref: '#/components/schemas/AdvancedBusinessRequest'
+                - properties:
+                    directorQueries:
+                      type: array
+                      items:
+                        allOf:
+                          - $ref: '#/components/schemas/Individual'
+              required:
+                - nzbn
+                - organisationNumber
+                - organisationName
+                - enquiryType
+                - accountType
+    AdvancedBusinessQuery:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/AdvancedBusinessRequest'
+        - properties:
+            directorQueries:
+              type: array
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/Individual'
+      
+      required:
+        - nzbn
+        - organisationNumber
+        - organisationName
+        - enquiryType
+        - accountType          
+    Individual:
+      required:
+        - givenName
+        - familyName
+        - gender
+        - dateOfBirth
+        - accessPurposeCode
+        - accountType
+        - currentAddress
+        - firstName
+        - amount
+      type: object
+      properties:
+        givenName:
+          description: Given (first) name
+          type: string
+        additionalNames:
+          description: Additional (middle) name(s)
+          type: string
+        familyName:
+          description: Family (last) name
+          type: string
+        dateOfBirth:
+          description: Subject birth date. ISO 8601 date string
+          type: string
+        gender:
+          description: Person's gender
+          type: string
+        accountType:
+          type: string
+        amount:
+          description: The NZD amount being enquired for
+          type: number
+        accessPurposeCode:
+          description: The purpose for requesing the report. Available codes are provided in the report manifest.
+          type: string
+        consent:
+          description: The subject has provided consent. Must be `true` if the chosen access purpose requires consent
+          type: boolean
+          enum:
+            - true
+            - false
+        mojFinesSearch:
+          description: The MOJ fines search. Optional
+          type: boolean
+          enum:
+            - true
+            - false
+        directorshipAffiliationSearch:
+          description: The Directorship Affiliation search. Optional
+          type: boolean
+          enum:
+            - true
+            - false
+        propertyOwnershipVerification:
+          description: The Propery ownership verfication. Optional
+          type: boolean
+          enum:
+            - true
+            - false        
+        licenceCheck:
+          description: The Licence check. Optional
+          type: boolean
+          enum:
+            - true
+            - false            
+            
+        currentAddress:
+          $ref: '#/components/schemas/Address'
+        #jointAccount:
+          #description: the subject is a co-borrower
+          #type: boolean
+        #guarantor:
+          #description: the subject is the guarantor for a third party's credit
+          #type: boolean
+        #previousAddresses:
+          #type: array
+          #items:
+            #$ref: '#/components/schemas/Address'
+        #occupation:
+          #description: Person's occupation or job title.
+          #type: string
+        #employer:
+          #description: Person's employer or organisation name.
+          #type: string
+        #licenceNumber:
+          #description: Driver licence number
+          #type: string
+        #licenceVersion:
+          #description: Driver licence version
+          #type: string
+    Address:
+      # At least one of the Suburb or City is mandatory
+      # StreetName is a mandatory field 
+      type: object
+      properties:
+        addressLevel1: #City
+          type: string
+        addressLevel2: #Suburb
+          type: string
+        country:
+          type: string
+        countryName:
+          type: string
+        postCode:
+          type: string
+        streetAddress:
+          properties:
+            addressLine1:
+              type: string
+            addressLine2:
+              type: string
+            addressLine3:
+              type: string
+            details:
+              properties:
+                streetAlpha:
+                  type: string
+                streetName:
+                  type: string
+                streetNumber:
+                  type: string
+                streetType:
+                  type: string
+          required:
+            - details
+      required:
+        - streetAddress
+      title: currentAddress
+    AddressInfo:
+      type: object
+      properties:
+        typeName:
+          description: type of address
+          type: string
+        address:
+          description: full address
+          type: string
+        dateFrom:
+          description: date from which entity has been at address
+          type: string
+        timeAtAddress:
+          description: time entity has been at address
+          type: string
+    IQCMetadata:
+      title: Metadata
+      type: object
+      properties:
+        id:
+          description: unique identifier of report
+          type: string
+        lid:
+          description: 4 character Lookup ID as displayed in IQ Connect Report History
+          type: string
+        userName:
+          type: string
+        user:
+          type: string
+        clientId:
+          description: internal client identifier
+          type: string
+        client:
+          description: client name as held internally
+          type: string
+        subject:
+          description: primary subject entity of report
+          type: string
+        requested:
+          description: date and time request made
+          type: string
+        completed:
+          description: date and time report complete
+          type: string
+        timestamp:
+          description: date and time report started processing
+          type: string
+        clientReference:
+          description: identifying reference provided by client
+          type: string
+        status:
+          $ref: '#/components/schemas/ReportStatus'
+        reportType:
+          description: reportType value used for requesting the correct report
+          type: string
+    BusinessReportCompileFalse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Report id
+        href:
+          type: string
+          description: target resource URI
+        status:
+          $ref: '#/components/schemas/ReportStatus'
+        reportType:
+         $ref: '#/components/schemas/ReportDataType'
+    StandardBusinessReportCompileTrue:
+      title: Standard Business Report (Compile=True)
+      type: object
+      properties:
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        data:
+          type: object
+          properties:
+            metadata:
+              $ref: '#/components/schemas/IQCMetadata'
+            body:
+              $ref: '#/components/schemas/IQCStandardBusinessData'
+            query:
+              $ref: '#/components/schemas/StandardBusinessRequest'
+            related:
+              type: object
+              properties:
+                organisationDetails:
+                  $ref: '#/components/schemas/OrgDetailsSubReport'
+                score:
+                  $ref: '#/components/schemas/CommScoreSubReport'
+                securityInterests:
+                  $ref: '#/components/schemas/SecInterestsSubReport'
+                management:
+                  $ref: '#/components/schemas/CommMgmtSubReport'
+                adverseHistory:
+                  $ref: '#/components/schemas/AdverseHistorySubReport'
+                enquiryHistory:
+                  $ref: '#/components/schemas/EnquiryHistorySubReport'
+                creditActivitySummary:
+                  $ref: '#/components/schemas/CreditActivitySubReport'
+                payments:
+                  $ref: '#/components/schemas/CommPaymentsSubReport'
+                eventsDocumentNotices:
+                  $ref: '#/components/schemas/EventsDocumentsNoticesSubReport'
+                ownership:
+                  $ref: '#/components/schemas/OrganisationOwnershipSubReport'
+                shareholders:
+                  $ref: '#/components/schemas/OrganisationShareholdersSubReport'
+    StandardBusinessReportCompileFalse:
+      title: Standard Business Report (Compile=False)
+      type: object
+      properties:
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        data:
+          type: object
+          properties:
+            metadata:
+              $ref: '#/components/schemas/IQCMetadata'
+            body:
+              $ref: '#/components/schemas/IQCStandardBusinessData'
+            query:
+              $ref: '#/components/schemas/StandardBusinessRequest'
+            related:
+              type: array
+              items:
+                # List of sub reports , excluding directorScore reportType
+                $ref: '#/components/schemas/BusinessReportCompileFalse'
+    AdvancedBusinessReportCompileTrue:
+      title: Standard Business Report (Compile=True)
+      type: object
+      properties:
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        data:
+          type: object
+          properties:
+            metadata:
+              $ref: '#/components/schemas/IQCMetadata'
+            body:
+              $ref: '#/components/schemas/IQCStandardBusinessData'
+            query:
+              $ref: '#/components/schemas/AdvancedBusinessQuery'
+            related:
+              type: object
+              properties:
+                organisationDetails:
+                  $ref: '#/components/schemas/OrgDetailsSubReport'
+                score:
+                  $ref: '#/components/schemas/CommScoreSubReport'
+                securityInterests:
+                  $ref: '#/components/schemas/SecInterestsSubReport'
+                management:
+                  $ref: '#/components/schemas/CommMgmtSubReport'
+                adverseHistory:
+                  $ref: '#/components/schemas/AdverseHistorySubReport'
+                enquiryHistory:
+                  $ref: '#/components/schemas/EnquiryHistorySubReport'
+                creditActivitySummary:
+                  $ref: '#/components/schemas/CreditActivitySubReport'
+                payments:
+                  $ref: '#/components/schemas/CommPaymentsSubReport'
+                eventsDocumentNotices:
+                  $ref: '#/components/schemas/EventsDocumentsNoticesSubReport'
+                ownership:
+                  $ref: '#/components/schemas/OrganisationOwnershipSubReport'
+                shareholders:
+                  $ref: '#/components/schemas/OrganisationShareholdersSubReport'
+                directorScore:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DirectorScoreSubReport'
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+    AdvancedBusinessReportCompileFalse:
+      title: Standard Business Report (Compile=False)
+      type: object
+      properties:
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        data:
+          type: object
+          properties:
+            metadata:
+              $ref: '#/components/schemas/IQCMetadata'
+            body:
+              $ref: '#/components/schemas/IQCStandardBusinessData'
+            query:
+              $ref: '#/components/schemas/AdvancedBusinessQuery'
+            related:
+              type: array
+              items:
+               # List of sub reports
+               $ref: '#/components/schemas/BusinessReportCompileFalse'
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+    IQCStandardBusinessData:
+      type: object
+      properties:
+        enquiryReference:
+          description: unique internal reference for enquiry
+          type: string
+        disclaimer:
+          description: legal disclaimer
+          type: string
+        summary:
+          type: object
+          properties:
+            organisationStatus:
+              description: current registration status of entity
+              type: string
+            enquiriesCount:
+              description: total count of credit enquiries in reporting period
+              type: integer
+            securitiesCount:
+              description: total count of active securities
+              type: integer
+            averagePaymentDays:
+              description: average number of days to make payment from invoice date
+              type: integer
+            defaultsCount:
+              description: total count of defaults in reporting period
+              type: integer
+            judgementsCount:
+              description: total count of judgments in reporting period
+              type: integer
+    OrgDetailsReport:
+      type: object
+      allOf:
+        - properties:
+            metadata:
+              $ref: '#/components/schemas/Metadata'
+        - $ref: '#/components/schemas/OrgDetailsSubReport'
+    OrgDetailsSubReport:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            metadata:
+              $ref: '#/components/schemas/IQCMetadata'
+            body:
+              $ref: '#/components/schemas/IQCOrgDetailsData'
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+    IQCOrgDetailsData:
+      type: object
+      properties:
+        businessDetails:
+          type: object
+          properties:
+            registeredName:
+              description: legal business name
+              type: string
+            tradingName:
+              description: business trading name
+              type: string
+            organisationNumber:
+              description: unique registered company number (incorporation number) for applicable entity types
+              type: string
+            nzbn:
+              description: unique NZBN number for the organisation
+              type: string
+            registrationStatus:
+              description: current registration status of the entity
+              type: string
+            statusCode:
+              description: 2 digit MBIE status code
+              type: number
+            previousRegisteredNames:
+              description: previous legal business names
+              type: array
+              items:
+                type: string
+            previousTradingNames:
+              description: previous business trading names
+              type: array
+              items:
+                type: string
+            relatedOrganisationsCount:
+              description: number of related organisations
+              type: number
+            directorsCount:
+              description: number of directors
+              type: number
+            shareHoldersCount:
+              description: number of shareholders
+              type: number
+            sharesIssued:
+              description: total number of shares issued
+              type: string
+            registrationDate:
+              description: original date registered as incorporated entity
+              type: string
+            deregistrationDate:
+              description: date of deregistration
+              type: string
+            registrationPeriod:
+              description: time entity has been registered for
+              type: string
+            businessType:
+              description: registered incorporation type of the entity
+              type: string
+            countryOfOrigin:
+              description: country of original registration
+              type: string
+            industry:
+              description: primary industry type of the entity
+              type: object
+              properties:
+                code:
+                  description: code for primary industry type of the entity
+                  type: string
+                description:
+                  description: description of primary industry type of the entity
+                  type: string
+            constitutionFiled:
+              description: has constitution been filed?
+              type: string
+            financialYearEnd:
+              description: financial year end date
+              type: string
+            lastFilingDate:
+              description: date last accounts filed
+              type: string
+            nzsxCode:
+              description: New Zealand Stock Exchange code
+              type: string
+        contactDetails:
+          description: main contact details for the organisation
+          type: object
+          properties:
+            phone:
+              description: telephone number
+              type: string
+            freePhone:
+              description: freephone telephone number
+              type: string
+            website:
+              description: website url
+              type: string
+            emailAddress:
+              description: contact email address
+              type: string
+            linkedIn:
+              description: linked in information
+              type: string
+        addressDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddressInfo'
+    CommScoreReport:
+      type: object
+      allOf:
+        - properties:
+            metadata:
+              $ref: '#/components/schemas/Metadata'
+        - $ref: '#/components/schemas/CommScoreSubReport'
+    CommScoreSubReport:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            metadata:
+              $ref: '#/components/schemas/IQCMetadata'
+            body:
+              $ref: '#/components/schemas/IQCCommScore'
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+    IQCCommScore:
+      type: object
+      properties:
+        scores:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              score:
+                type: integer
+              messages:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IQCMessages'
+        risks:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              percentageValue:
+                type: number
+              messages:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IQCMessages'
+        keyFactors:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              desc:
+                type: string
+              impact:
+                type: string
+    SecInterestsReport:
+      type: object
+      allOf:
+        - properties:
+            metadata:
+              $ref: '#/components/schemas/Metadata'
+        - $ref: '#/components/schemas/SecInterestsSubReport'
+    SecInterestsSubReport:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            metadata:
+              $ref: '#/components/schemas/IQCMetadata'
+            body:
+              $ref: '#/components/schemas/IQCSecInterests'
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+    IQCSecInterests:
+      type: object
+      properties:
+        message:
+          description: general information message
+          type: string
+        collateralTypes:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              description:
+                type: string
+        summary:
+          type: object
+          properties:
+            totalExpiringNextSixMonths:
+              description: total count of security interests expiring in the next six months
+              type: integer
+            totalRegisteredLastSixMonths:
+              description: total count of security interests registered in the six months
+              type: integer
+            totalFinancingStatements:
+              description: total count of active current Financing Statements (security interests)
+              type: integer
+            totalCollaterals:
+              description: total count of collaterals included in Financing Statements
+              type: integer
+            searchId:
+              description: unique identifier of processed search
+              type: string
+            searchDateTime:
+              description: date and time search processed
+              type: string
+            securitiesByCollateralType:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                      description:
+                        type: string
+                  count:
+                    type: number
+
+        statementsRegisteredTotals:
+          type: array
+          items:
+            $ref: '#/components/schemas/nameWithCount'
+        collateralsRegisteredTotals:
+          type: array
+          items:
+            $ref: '#/components/schemas/nameWithCount'
+        financingStatements:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                description: unique financing statement id
+                type: string
+              registrationDate:
+                type: string
+              expiryDate:
+                type: string
+              versionNumber:
+                type: string
+              lastAmendment:
+                type: string
+              securedParties:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+              collaterals:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    chassis:
+                     type: string
+                    colour:
+                     type: string
+                    description:
+                     type: string
+                    identifyingNumber:
+                     type: string
+                    itemDescription:
+                     type: string
+                    make:
+                     type: string
+                    manufacturerSerial:
+                     type: string
+                    itemClass:
+                     type: string
+                    model:
+                     type: string
+                    registrationMark:
+                     type: string
+                    registrationNumber:
+                     type: string
+                    type:
+                     type: object
+                     properties:
+                      code:
+                       type: string
+                      description:
+                       type: string
+                    vin:
+                      type: string
+                    year:
+                      type: string
+    CommMgmtReport:
+      type: object
+      allOf:
+        - properties:
+            metadata:
+              $ref: '#/components/schemas/Metadata'
+        - $ref: '#/components/schemas/CommMgmtSubReport'
+    CommMgmtSubReport:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            metadata:
+              $ref: '#/components/schemas/IQCMetadata'
+            body:
+              $ref: '#/components/schemas/IQCCommMgmt'
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+    IQCCommMgmt:
+      title: Commercial Score
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            totalCurrentOfficeHolders:
+              type: integer
+            totalPreviousOfficeHoldersLast12Months:
+              type: integer
+            longestServingCurrentOfficeHolder:
+              type: string
+            underExternalAdministration:
+              type: boolean
+            relatedEntityRiskFlag:
+              type: string
+        currentOfficeHolders:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfficeHolder'
+        previousOfficeHolders:
+          type: array
+          items:
+            $ref: '#/components/schemas/PreviousOfficeHolder'
+        externalAdministrationDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalAdministration'
+    OfficeHolder:
+      type: object
+      properties:
+        officeHolderDetails:
+          $ref: '#/components/schemas/OfficeHolderDetails'
+        totalOtherOfficeHoldings:
+          type: string
+        totalPreviousOfficeHoldings:
+          type: string
+        otherOfficeHoldings:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfficeHoldings'
+    PreviousOfficeHolder:
+      type: object
+      properties:
+        officeHolderDetails:
+          $ref: '#/components/schemas/OfficeHolderDetails'
+    OfficeHolderDetails:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+        appointmentDate:
+          type: string
+        resignationDate:
+          type: string
+        address:
+          type: string
+    OfficeHoldings:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+        appointmentDate:
+          type: string
+        organisationName:
+          type: string
+        organisationNumber:
+          type: string
+        nzbn:
+          type: string
+        status:
+          type: string
+        riskLevel:
+          type: string
+        tradingNames:
+          type: array
+          items:
+            type: string
+        bodyType:
+          type: string
+    ExternalAdministration:
+      type: object
+      properties:
+        sequence:
+          type: string
+        status:
+          type: string
+        description:
+          type: string
+        appointees:
+          type: array
+          items:
+            $ref: '#/components/schemas/Appointee'
+        reports:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExtAdminReport'
+    Appointee:
+      type: object
+      properties:
+        name:
+          type: string
+        date:
+          type: string
+        organisation:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        address:
+          type: string
+    ExtAdminReport:
+      type: object
+      properties:
+        name:
+          type: string
+        dateOfReport:
+          type: string
+        reportFiled:
+          type: string
+    AdverseHistoryReport:
+      type: object
+      allOf:
+        - properties:
+            metadata:
+              $ref: '#/components/schemas/Metadata'
+        - $ref: '#/components/schemas/AdverseHistorySubReport'
+    AdverseHistorySubReport:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            metadata:
+              $ref: '#/components/schemas/IQCMetadata'
+            body:
+              $ref: '#/components/schemas/IQCAdvHist'
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+    IQCAdvHist:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            defaultsLast5Years:
+              type: object
+              properties:
+                count:
+                  type: integer
+                valueSum:
+                  type: number
+            defaultsLast12Months:
+              type: object
+              properties:
+                count:
+                  type: integer
+                valueSum:
+                  type: number
+            defaultsOver12Months:
+              type: object
+              properties:
+                count:
+                  type: integer
+                valueSum:
+                  type: number
+            defaultsActive:
+              type: object
+              properties:
+                count:
+                  type: integer
+                valueSum:
+                  type: number
+            defaultsClosed:
+              type: object
+              properties:
+                count:
+                  type: integer
+                valueSum:
+                  type: number
+        collectionAgencyDefaults:
+          type: array
+          items:
+            $ref: '#/components/schemas/Default'
+        creditorDefaults:
+          type: array
+          items:
+            $ref: '#/components/schemas/Default'
+        courtJudgments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Judgment'
+    Default:
+      type: object
+      properties:
+        creditor:
+          type: object
+          properties:
+            name:
+              type: string
+            industry:
+              type: object
+              properties:
+                code:
+                  type: string
+                description:
+                  type: string
+        defaultId:
+          type: string
+        defaultAmount:
+          type: number
+        defaultType:
+          type: string          
+        defaultDate:
+          type: string
+        dateAccountOpened:
+          type: string
+        accountTerms:
+          type: string
+        address:
+          type: string
+        jointLiability:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              address:
+                type: string
+        currentStatus:
+          type: string
+        balanceOwing:
+          type: number
+        lastActionDate:
+          type: string
+        datePaid:
+          type: string
+        notes:
+          type: string
+    Judgment:
+      type: object
+      properties:
+        creditorName:
+          type: string
+        judgmentAmount:
+          type: string
+        publicationDate:
+          type: string
+        status:
+          type: string
+        statusDate:
+          type: string
+        courtType:
+          type: string
+        description:
+          type: string
+        details:
+          type: string
+    EnquiryHistoryReport:
+      type: object
+      allOf:
+        - properties:
+            metadata:
+              $ref: '#/components/schemas/Metadata'
+        - $ref: '#/components/schemas/EnquiryHistorySubReport'
+    EnquiryHistorySubReport:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            metadata:
+              $ref: '#/components/schemas/IQCMetadata'
+            body:
+              $ref: '#/components/schemas/IQCEnqHist'
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+    IQCEnqHist:
+      type: object
+      properties:
+        industries:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              description:
+                type: string
+        accountTypes:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              description:
+                type: string
+        enquiryTypes:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              description:
+                type: string
+        enquiryTotals:
+          type: object
+          properties:
+            count:
+              type: integer
+            valueSum:
+              type: number
+            valueAverage:
+              type: number
+        enquiryTotalsLast12Months:
+          type: object
+          properties:
+            count:
+              type: integer
+            valueSum:
+              type: number
+            valueAverage:
+              type: number
+        enquiryTotalsLast5Years:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              count:
+                type: integer
+              valueSum:
+                type: number
+              valueAverage:
+                type: number
+        enquiries:
+          type: array
+          items:
+            $ref: '#/components/schemas/Enquiry'
+    Enquiry:
+      type: object
+      properties:
+        date:
+          type: string
+        enquirer:
+          type: object
+          properties:
+            name:
+              type: string
+            industry:
+              type: object
+              properties:
+                code:
+                  type: string
+                description:
+                  type: string
+        amount:
+          type: number
+        enquiryType:
+          type: object
+          properties:
+            code:
+              type: string
+            description:
+              type: string
+        accountType:
+          type: object
+          properties:
+            code:
+              type: string
+            description:
+              type: string
+    CreditActivityReport:
+      type: object
+      allOf:
+        - properties:
+            metadata:
+              $ref: '#/components/schemas/Metadata'
+        - $ref: '#/components/schemas/CreditActivitySubReport'
+    CreditActivitySubReport:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            metadata:
+              $ref: '#/components/schemas/IQCMetadata'
+            body:
+              $ref: '#/components/schemas/IQCCreditActivity'
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+    IQCCreditActivity:
+      type: object
+      properties:
+        creditorDefaultsLast12Months:
+          type: integer
+        creditorDefaultsOver12Months:
+          type: integer
+        collectionAgencyDefaultsLast12Months:
+          type: integer
+        collectionAgencyDefaultsOver12Months:
+          type: integer
+        courtJudgmentsLast12Months:
+          type: integer
+        courtJudgmentsOver12Months:
+          type: integer
+        ageOfCreditFile:
+          type: string
+        publicNoticesCount:
+          type: integer
+        tradeSuppliersCount:
+          type: integer
+        registeredSecuritiesCount:
+          type: integer
+        enquiriesCount:
+          type: integer
+    CommPaymentsReport:
+      type: object
+      allOf:
+        - properties:
+            metadata:
+              $ref: '#/components/schemas/Metadata'
+        - $ref: '#/components/schemas/CommPaymentsSubReport'
+    CommPaymentsSubReport:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            metadata:
+              $ref: '#/components/schemas/IQCMetadata'
+            body:
+              $ref: '#/components/schemas/IQCCommPayments'
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+    IQCCommPayments:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            reportingPeriod:
+              type: string
+            tradePaymentDays:
+              type: number
+            nzTradePaymentRating:
+              type: number
+            industry:
+              type: object
+              properties:
+                code:
+                  type: string
+                description:
+                  type: string
+            tradePaymentTrend:
+              type: integer
+            industryTradePaymentRating:
+              type: integer
+            paymentReferenceCount24Months:
+              type: integer
+            paymentContributerCount24Months:
+              type: integer
+            highestOwingSingleCreditor:
+              type: integer
+            highestPastDueSingleCreditor:
+              type: integer
+            averageTotalOwing4Month:
+              type: integer
+            averageCurrentOwing4Month:
+              type: integer
+            averageOverdueOwing4Month:
+              type: integer
+            highestDebtOverdue30Days:
+              type: integer
+            highestDebtOverdue60Days:
+              type: integer
+            highestDebtOverdue90Days:
+              type: integer
+            overduePercentage:
+              type: integer
+            largestExposureIndustry:
+              type: object
+              properties:
+                code:
+                  type: string
+                description:
+                  type: string
+            largestExposure:
+              type: integer
+        industries:
+          type: array
+          items:
+            type: object
+            properties:
+                code:
+                  type: string
+                description:
+                  type: string
+        periods:
+          type: array
+          items:
+            type: object
+            properties:
+                code:
+                  type: string
+                description:
+                  type: string
+        recentPaymentPerformance:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentPerformance'
+        paymentPerformanceByDebtSize:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentPerformance'
+        paymentHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentHistory'
+    PaymentPerformance:
+      type: object
+      properties:
+        aggregation:
+          type: string
+        total:
+          type: integer
+        current:
+          type: integer
+        to30Days:
+          type: integer
+        to60Days:
+          type: integer
+        to90Days:
+          type: integer
+        over91Days:
+          type: integer
+    PaymentHistory:
+      type: object
+      properties:
+        industry:
+          type: object
+          properties:
+            name:
+              type: string
+        months:
+          type: array
+          items:
+            type: string
+        worstPaymentStatus:
+          type: array
+          items:
+            type: string
+        tradeReferences:
+          type: array
+          items:
+            type: integer
+        currentAmount:
+          type: array
+          items:
+            type: integer
+        totalOwing:
+          type: array
+          items:
+            type: integer
+        totalOverdue:
+          type: array
+          items:
+            type: integer
+        averageValue:
+          type: array
+          items:
+            type: integer
+        overduePercentage:
+          type: array
+          items:
+            type: integer
+        overdueDays:
+          type: array
+          items:
+            type: integer
+    EventsDocumentsNoticesReport:
+      type: object
+      allOf:
+        - properties:
+            metadata:
+              $ref: '#/components/schemas/Metadata'
+        - $ref: '#/components/schemas/EventsDocumentsNoticesSubReport'
+    EventsDocumentsNoticesSubReport:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            metadata:
+              $ref: '#/components/schemas/IQCMetadata'
+            body:
+              $ref: '#/components/schemas/IQCEventsDocsNotes'
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+    IQCEventsDocsNotes:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+        eventsCount:
+          type: integer
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        documentsCount:
+          type: integer
+        publicNotices:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicNotice'
+        publicNoticesCount:
+          type: integer
+    Event:
+      type: object
+      properties:
+        date:
+          type: string
+        importance:
+          type: string
+        type:
+          type: string
+        url:
+          type: string
+    Document:
+      type: object
+      properties:
+        type:
+          type: string
+        code:
+          type: string
+        barcode:
+          type: string
+        url:
+          type: string
+        registeredDate:
+          type: string
+    PublicNotice:
+      type: object
+      properties:
+        createdDate:
+          type: string
+        id:
+          type: string
+        type:
+          type: string
+        description:
+          type: string
+    OrganisationOwnershipReport:
+      type: object
+      allOf:
+        - properties:
+            metadata:
+              $ref: '#/components/schemas/Metadata'
+        - $ref: '#/components/schemas/OrganisationOwnershipSubReport'
+    OrganisationOwnershipSubReport:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            metadata:
+              $ref: '#/components/schemas/IQCMetadata'
+            body:
+              $ref: '#/components/schemas/IQCOrgOwner'
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+    IQCOrgOwner:
+      type: object
+      properties:
+        parents:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParentEntity'
+        subsidiaries:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubsidiaryEntity'
+        relatedEntityRisks:
+          type: integer
+    ParentEntity:
+      type: object
+      allOf:
+        - properties:
+            parentName:
+              type: string
+        - $ref: '#/components/schemas/Entity'
+    SubsidiaryEntity:
+      type: object
+      allOf:
+        - properties:
+            subsidiaryName:
+              type: string
+        - $ref: '#/components/schemas/Entity'
+    Entity:
+      type: object
+      properties:
+        bodyType:
+          type: string
+        organisationNumber:
+          type: string
+        nzbn:
+          type: string
+        status:
+          type: string
+        riskGrade:
+          type: string
+        tradingNames:
+          type: array
+          items:
+            type: string
+        addressSummary:
+          type: string
+        sharesHeld:
+          type: string
+        percentageHeld:
+          type: string
+    OrganisationShareholdersReport:
+      type: object
+      allOf:
+        - properties:
+            metadata:
+              $ref: '#/components/schemas/Metadata'
+        - $ref: '#/components/schemas/OrganisationShareholdersSubReport'
+    OrganisationShareholdersSubReport:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            metadata:
+              $ref: '#/components/schemas/IQCMetadata'
+            body:
+              $ref: '#/components/schemas/IQCOrgShares'
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+    IQCOrgShares:
+      type: object
+      properties:
+        sharesIssued:
+          type: integer
+        extensiveShareholding:
+          type: string
+        totalAllocations:
+          type: integer
+        totalJointAllocations:
+          type: integer
+        totalShareholders:
+          type: integer
+        totalOrganisationShareholders:
+          type: integer
+        totalIndividualShareholders:
+          type: integer
+        allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Allocation'
+        totalPreviousShareholders:
+          type: integer
+        totalPreviousShareholdersLast12Months:
+          type: integer
+        relatedEntityRisks:
+          type: integer
+    Allocation:
+      type: object
+      properties:
+        allocation:
+          type: integer
+        type:
+          type: string
+        sharesHeld:
+          type: integer
+        percentageHeld:
+          type: number
+        shareholders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Shareholder'
+    Shareholder:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        addressSummary:
+          type: string
+        extensiveOtherShareholdings:
+          type: boolean
+        otherShareholdings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Shareholding'
+        totalOtherShareholdings:
+          type: number
+    Shareholding:
+      type: object
+      properties:
+        organisationName:
+          type: string
+        organisationNumber:
+          type: string
+        bodyType:
+          type: string
+        nzbn:
+          type: string
+        riskGrade:
+          type: string
+        status:
+          type: string
+        addressSummary:
+          type: string
+        sharesHeld:
+          type: string
+        percentageHeld:
+          type: string
+        tradingNames:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+    DirectorScoreReport:
+      type: object
+      allOf:
+        - properties:
+            metadata:
+              $ref: '#/components/schemas/Metadata'
+        - $ref: '#/components/schemas/DirectorScoreSubReport'
+    DirectorScoreSubReport:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            metadata:
+              $ref: '#/components/schemas/IQCMetadata'
+            body:
+              type: object
+              properties:
+                directorName:
+                  type: string
+                directorScore:
+                  type: number
+        _links:
+          type: object
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+    ErrorResponses:
+      title: ErrorResponses
+      type: object
+      properties:
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+        _links:
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
